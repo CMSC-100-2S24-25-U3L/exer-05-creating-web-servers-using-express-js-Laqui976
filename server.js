@@ -7,9 +7,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 const FILE_PATH = path.join(process.cwd(), books.txt);
 
-app.get ("/", (req,res)=> {
-    res.send("Welcome");
-});
 const readFile =  () =>{
   if (!fs.existsSync(FILE_PATH)) return [];
 
@@ -26,29 +23,38 @@ const readFile =  () =>{
     });
 }
 
+let books = readFile();
+app.get ("/", (req,res)=> {
+    res.send("Welcome");
+});
+
 app.post("/add-book", (req, res) => {
   const {book_name, isbn, author, year_pub} = req.body;
-  var isSuccess = true;
-  isSuccess = true;
+
   if (book_name.isEmpty()||isbn.isEmpty()||author.isEmpty()||year_pub.isEmpty()){
     isSuccess = false;
-  }else{
-    try{
-      fs.appendFileSync(FILE_PATH,[book_name, isbn, author, year_pub],"utf8");
-    }catch(err){
-      console.log(err);
-      isSuccess=false;
+  }try {
+    if (!fs.existsSync(FILE_PATH)) {
+      fs.writeFileSync(FILE_PATH, ""); // Ensure the file exists
     }
 
-  }
+    // Append book to file
+    fs.appendFileSync(FILE_PATH, `\n${book_name},${isbn},${author},${year_pub}`, "utf8");
 
-  res.send("{Success: " + isSuccess.toString() + " }");
+    books = readFile(); // Refresh books list after adding a new entry
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error writing to file:", err);
+    res.json({ success: false });
+  }
+});
+
+ 
 
 });
 
 app.get("/find-by-isbn-author", (req, res) => {
     const {isbn, author} = req.query;
-    const books = readFile();
     const foundBooks = books.filter(book => book.isbn === isbn && book.author === author);
     res.json(foundBooks);
 
@@ -56,7 +62,6 @@ app.get("/find-by-isbn-author", (req, res) => {
 
 app.get("/find-by-author", (req, res) => {
   const {author} = req.query;
-  const books = readFile();
   const foundBooks = books.filter(book => book.author === author);
   res.json(foundBooks);
 
