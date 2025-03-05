@@ -1,48 +1,68 @@
 import express from "express";
-import { openSync, closeSync, appendFileSync } from "node:fs";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const FILE_PATH = path.join(process.cwd(), books.txt);
 
 app.get ("/", (req,res)=> {
     res.send("Welcome");
 });
-app.post("/add-book", (req, res) => {
-  var book_name ="Harry Potter and the Philosopher's Stone";
-  var author ="J.K Rowling";
-  var isbn = "978-0-7475-3269-9";
-  var year_pub = 1997;
-  var isSuccess = false;
+const readFile =  () =>{
+  if (!fs.existsSync(FILE_PATH)) return [];
 
-  if (verify_book(book_name, author, isbn, year_pub)) {
-    try {
-      fs = openSync('books.txt', 'a');
-      appendFileSync(fs, [book_name, author, isbn, year_pub] , 'utf8');
-      } catch (err) {
-          console.log(err);
-      } finally {
-      if (fs !== undefined)
-          closeSync(fs);
-      } 
-    isSuccess = true;
+  const data  = fs.readFileSync (FILE_PATH, "utf8").trim();
+  if (!data) return;
+    return data.split("\n").map(line => {
+      const book_details = line.split(",");
+      return{
+        book_name: book_details[0],
+        isbn: book_details[1],
+        author: book_details[2],
+        year_pub: book_details[3]
+      };
+    });
+}
+
+app.post("/add-book", (req, res) => {
+  const {book_name, isbn, author, year_pub} = req.body;
+  var isSuccess = true;
+  isSuccess = true;
+  if (book_name.isEmpty()||isbn.isEmpty()||author.isEmpty()||year_pub.isEmpty()){
+    isSuccess = false;
+  }else{
+    try{
+      fs.appendFileSync(FILE_PATH,[book_name, isbn, author, year_pub],"utf8");
+    }catch(err){
+      console.log(err);
+      isSuccess=false;
+    }
+
   }
-  res.send("{Succes: " + isSuccess.toString() + " }");
+
+  res.send("{Success: " + isSuccess.toString() + " }");
+
 });
 
+app.get("/find-by-isbn-author", (req, res) => {
+    const {isbn, author} = req.query;
+    const books = readFile();
+    const foundBooks = books.filter(book => book.isbn === isbn && book.author === author);
+    res.json(foundBooks);
+
+});
+
+app.get("/find-by-author", (req, res) => {
+  const {author} = req.query;
+  const books = readFile();
+  const foundBooks = books.filter(book => book.author === author);
+  res.json(foundBooks);
+
+});
 app.listen(3000, () => {
   console.log("");
 });
 
-function verify_book(book_name, author, isbn, year_pub) {
-  if (
-    book_name.isEmpty() &&
-    author.isEmpty() &&
-    year_pub.isEmpty &&
-    isbn.isEmpty
-  ) {
-    return true;
-  }
 
-  return false;
-}

@@ -20,9 +20,22 @@ var books = {
     year: 1943,
   },
 };
-needle.post("http://localhost:3000/add-book", "foo=bar", books, (err, res) => {
-  console.log(res.body);
+Object.values(books).forEach((book) => {
+  needle.post("http://localhost:3000/add-book", "foo=bar", books, (err, res) => {
+    if(err){
+      console.log("error");
+    }else{
+      console.log(res.body);
+    }
+    
+
 });
-needle.get("http://localhost:3000/add-book", (err, res) => {
-  console.log(res.body);
+});
+
+needle.get("http://localhost:3000/find-by-isbn-author?isbn=978-0-7475-3269-9&author=J.K%20Rowling", (err, res) => {
+  if(err){
+    console.log("error");
+  }else{
+    console.log(res.body);
+  }
 });
