@@ -12,8 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.2",
+    "isbn3": "^1.2.8",
     "needle": "^3.3.1"
   },
-  "type": "module",
-  "devDependencies": {}
+  "type": "module"
 }
